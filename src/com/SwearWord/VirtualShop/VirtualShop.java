@@ -53,23 +53,9 @@ public class VirtualShop extends JavaPlugin{
 				if(args[0].equalsIgnoreCase("exchange") && (sender instanceof Player))
 				{
 					Player p = (Player)sender;
-					InventoryManager im = new InventoryManager(p);
-					ItemStack gold = im.quantify(new ItemStack(Material.GOLD_INGOT));
-					int payment = gold.getAmount() * 250;
-					iConomy.Accounts.get(p.getName()).getHoldings().add(payment);
-					im.remove(gold);
-					if(gold.getAmount() > 0)
-					{
-						p.sendMessage(prefix + "Exchanged " + gold.getAmount()+ " gold ingot for " + payment + " coin." );
-					}
-					ItemStack diamond = im.quantify(new ItemStack(Material.DIAMOND));
-					payment = diamond.getAmount() * 1000;
-					iConomy.Accounts.get(p.getName()).getHoldings().add(payment);
-					im.remove(diamond);
-					if(diamond.getAmount() > 0)
-					{
-						p.sendMessage(prefix + "Exchanged " + diamond.getAmount()+ " diamond for " + payment + " coin." );
-					}
+					Exchange(new ItemStack(Material.PAPER), p, 10);
+					Exchange(new ItemStack(Material.GOLD_INGOT), p, 250);
+					Exchange(new ItemStack(Material.DIAMOND), p, 1000);
 					return true;
 					
 				}
@@ -203,6 +189,19 @@ public class VirtualShop extends JavaPlugin{
 		}
 		return false;
 		}
+	
+	public void Exchange(ItemStack type, Player p, int price)
+	{
+		InventoryManager im = new InventoryManager(p);
+		ItemStack items = im.quantify(type);
+		int payment = items.getAmount() * price;
+		iConomy.Accounts.get(p.getName()).getHoldings().add(payment);
+		im.remove(items);
+		if(items.getAmount() > 0)
+		{
+			p.sendMessage(prefix + "Exchanged " + items.getAmount()+ " " + type.getType().name() + " for " + payment + " coin." );
+		}
+	}
 	
 	public Material GetItem(String item)
 	{

@@ -1,0 +1,16 @@
+name: VirtualShop
+main: com.SwearWord.VirtualShop.VirtualShop
+version: 1.0
+commands:
+   vs:
+      description: Acess VirtualShop.
+      usage: | 
+         /vs buy <amount> item
+         /vs sell <amount> <item> <price>
+         /vs remove <item>
+         /vs price <item>
+         /vs list
+         /vs list <page>
+         /vs list me
+         /vs list <player>
+         /vs exchange

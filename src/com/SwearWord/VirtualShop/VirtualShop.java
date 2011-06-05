@@ -1,7 +1,13 @@
 package com.SwearWord.VirtualShop;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.HashMap;
+import java.util.Properties;
 import java.util.logging.Logger;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
@@ -21,7 +27,10 @@ public class VirtualShop extends JavaPlugin{
 	Logger log = Logger.getLogger("Minecraft");
 	public String prefix = ChatColor.DARK_GREEN + "[Virtual Shop] ";
 	public sqlCore db;
+	public static HashMap exchanges = new HashMap(); 
 	public File folder = new File("plugins/VirtualShop");
+	public File config = new File("plugins/VirtualShop/config.txt");
+	static Properties properties = new Properties();
 	
 	public void onEnable(){ 
 		
@@ -29,6 +38,24 @@ public class VirtualShop extends JavaPlugin{
 		if(!folder.exists()){
 			folder.mkdir();
 		}
+		if(!config.exists()){
+			try 
+			{
+				config.createNewFile();
+				FileOutputStream out = new FileOutputStream(config);
+				properties.put("items", "266;250,264;1000,339,10");
+				properties.store(out, "/vs exhange items with price serparated by ,");
+				out.flush();
+				out.close();
+				
+			} 
+			catch (IOException e) 
+			{
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}			
+		}
+		loadconfig();
 		
 		db = new sqlCore(log,prefix, "VirtualShop",folder.getPath());
 		db.initialize();
@@ -39,6 +66,26 @@ public class VirtualShop extends JavaPlugin{
 		}
 		 
 	} 
+	private void loadconfig() 
+	{
+		try {
+			FileInputStream is = new FileInputStream(config);
+			properties.load(is);
+			String[] splits = properties.getProperty("items").split(",");
+			for(int i=0;i<splits.length;i++)
+			{
+				String[] line = splits[i].split(";");
+				int id = Integer.parseInt(line[0]);
+				double price = Double.parseDouble(line[1]);
+				exchanges.put(id, price);
+			}
+			is.close();
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+	}
 	public void onDisable()
 	{ 
 		db.close();
@@ -53,9 +100,12 @@ public class VirtualShop extends JavaPlugin{
 				if(args[0].equalsIgnoreCase("exchange") && (sender instanceof Player))
 				{
 					Player p = (Player)sender;
-					Exchange(new ItemStack(Material.PAPER), p, 10);
-					Exchange(new ItemStack(Material.GOLD_INGOT), p, 250);
-					Exchange(new ItemStack(Material.DIAMOND), p, 1000);
+					for(int i=0;i<exchanges.size();i++)
+					{
+						int id = (Integer)exchanges.keySet().toArray()[i];
+						double price = (Double)exchanges.get(id);
+						Exchange(new ItemStack(id),p,price);
+					}
 					return true;
 					
 				}
@@ -190,11 +240,11 @@ public class VirtualShop extends JavaPlugin{
 		return false;
 		}
 	
-	public void Exchange(ItemStack type, Player p, int price)
+	public void Exchange(ItemStack type, Player p, double price)
 	{
 		InventoryManager im = new InventoryManager(p);
 		ItemStack items = im.quantify(type);
-		int payment = items.getAmount() * price;
+		double payment = items.getAmount() * price;
 		iConomy.Accounts.get(p.getName()).getHoldings().add(payment);
 		im.remove(items);
 		if(items.getAmount() > 0)

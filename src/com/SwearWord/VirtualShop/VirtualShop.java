@@ -199,7 +199,7 @@ public class VirtualShop extends JavaPlugin{
 		im.remove(items);
 		if(items.getAmount() > 0)
 		{
-			p.sendMessage(prefix + "Exchanged " + items.getAmount()+ " " + type.getType().name() + " for " + payment + " coin." );
+			p.sendMessage(prefix + "Exchanged " + items.getAmount()+ " " + type.getType().name() + " for " + iConomy.format(payment)+"." );
 		}
 	}
 	
@@ -388,7 +388,7 @@ public class VirtualShop extends JavaPlugin{
 		}
 		else
 		{
-			player.sendMessage(prefix + "Managed to buy " + (original-amount) + " " + item.name() + " for " + spent + " coins");
+			player.sendMessage(prefix + "Managed to buy " + (original-amount) + " " + item.name() + " for " + iConomy.format(spent));
 		}
 	}
 	
@@ -398,7 +398,7 @@ public class VirtualShop extends JavaPlugin{
 		try {
 			while(r.next())
 			{
-				String result = r.getString("seller")+" selling "+r.getInt("amount")+" "+Material.getMaterial(r.getInt("item")) + " for "+r.getFloat("price")+" coins";
+				String result = r.getString("seller")+" selling "+r.getInt("amount")+" "+Material.getMaterial(r.getInt("item")) + " for "+iConomy.format(r.getFloat("price"));
 				//String result = r.getString("item") + " " + r.getFloat("price");
 				sender.sendMessage(prefix + result);
 			}

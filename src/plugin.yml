@@ -3,10 +3,11 @@ main: com.SwearWord.VirtualShop.VirtualShop
 version: 1.0
 commands:
    vs:
-      description: Acess VirtualShop.
+      description: Access VirtualShop.
       usage: | 
          /vs buy <amount> item
          /vs sell <amount> <item> <price>
+         /vs sell <amount> hand <price>
          /vs remove <item>
          /vs price <item>
          /vs list

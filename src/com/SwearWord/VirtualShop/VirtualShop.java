@@ -229,7 +229,7 @@ public class VirtualShop extends JavaPlugin{
 			while(r.next())
 			{
 				//sender.sendMessage(item.name() + " for " + r.getFloat("price"));
-				sender.sendMessage(prefix + r.getString("seller") + " selling " + r.getInt("amount") + " " + item.name() + " for " + r.getFloat("price") + " coins");
+				sender.sendMessage(prefix + r.getString("seller") + " selling " + r.getInt("amount") + " " + item.name() + " for " + iConomy.format(r.getFloat("price")));
 				count++;
 			}
 		} catch (SQLException e) {
@@ -291,7 +291,7 @@ public class VirtualShop extends JavaPlugin{
 		db.insertQuery(query);
 		im.remove(stack);
 
-		player.getServer().broadcastMessage(prefix + player.getName() + " has put " + amount + " "+ item.name() + " for sale for " + price + " coins each.");
+		player.getServer().broadcastMessage(prefix + player.getName() + " has put " + amount + " "+ item.name() + " for sale for " + iConomy.format(price) + " each.");
 	}
 	
 	public void BuyItem(CommandSender sender, Material item, int amount)
@@ -318,8 +318,20 @@ public class VirtualShop extends JavaPlugin{
 				String seller = r.getString("seller");
 				
 				
-				if(amount >= quant && money.hasEnough(cost))
+				if(amount >= quant)
 				{
+					//Finds max that can be bought
+					if(!(money.hasEnough(cost)))
+					{
+						quant = (int)(money.balance() / price);
+						if(amount < 1)
+						{
+							player.sendMessage(prefix + "Ran out of money!");
+							break;
+						}
+						cost = price * quant;
+						
+					}
 					amount = amount-quant;
 					money.subtract(cost);
 					spent += cost;
@@ -337,9 +349,16 @@ public class VirtualShop extends JavaPlugin{
 				else
 				{
 					cost = amount*price;
-					if(money.hasEnough(cost))
+					if(!money.hasEnough(cost))
 					{
-						
+						amount = (int)(money.balance() / price);
+						if(amount < 1)
+						{
+							player.sendMessage(prefix + "Ran out of money!");
+							break;
+						}
+						cost = price * amount;
+					}
 						int left = quant - amount;
 						money.subtract(cost);
 						spent += cost;
@@ -354,7 +373,7 @@ public class VirtualShop extends JavaPlugin{
 						amount = 0;
 						query = "update stock set amount="+left+" where id=" + id;
 						db.updateQuery(query);
-					}
+					
 				}
 				
 			}

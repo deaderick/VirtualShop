@@ -356,9 +356,11 @@ public class VirtualShop extends JavaPlugin{
 		String query = "select * from stock where item=" + item.getId()+ " order by price asc";
 		ResultSet r = db.sqlQuery(query);
 		InventoryManager im = new InventoryManager(player);
+		int rows =0;
 		try {
 			while(r.next() && amount != 0)
 			{
+				rows++;
 				int id = r.getInt("id");
 				int quant = r.getInt("amount");
 				float price = r.getFloat("price");
@@ -372,7 +374,7 @@ public class VirtualShop extends JavaPlugin{
 					if(!(money.hasEnough(cost)))
 					{
 						quant = (int)(money.balance() / price);
-						if(amount < 1)
+						if(quant < 1)
 						{
 							player.sendMessage(prefix + "Ran out of money!");
 							break;
@@ -399,13 +401,14 @@ public class VirtualShop extends JavaPlugin{
 					cost = amount*price;
 					if(!money.hasEnough(cost))
 					{
-						amount = (int)(money.balance() / price);
-						if(amount < 1)
+						quant = (int)(money.balance() / price);
+						if(quant < 1)
 						{
 							player.sendMessage(prefix + "Ran out of money!");
+							
 							break;
 						}
-						cost = price * amount;
+						cost = price * quant;
 					}
 						int left = quant - amount;
 						money.subtract(cost);
@@ -430,7 +433,7 @@ public class VirtualShop extends JavaPlugin{
 		{
 			
 		}
-		if(amount == original)
+		if(rows == 0)
 		{
 			player.sendMessage(prefix + "There is no " + item.name()+ " for sale.");
 		}

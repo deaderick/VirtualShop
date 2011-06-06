@@ -35,6 +35,13 @@ public class VirtualShop extends JavaPlugin{
 	public void onEnable(){ 
 		
 		log.info(prefix+"VirtualShop loading.");
+		
+		try {
+			ItemDb.load(folder, "items.csv");
+		} catch (IOException e1) {
+			e1.printStackTrace();
+			return;
+		}
 		if(!folder.exists()){
 			folder.mkdir();
 		}
@@ -43,7 +50,7 @@ public class VirtualShop extends JavaPlugin{
 			{
 				config.createNewFile();
 				FileOutputStream out = new FileOutputStream(config);
-				properties.put("items", "266;250,264;1000,339,10");
+				properties.put("items", "266;250,264;1000,339;10");
 				properties.store(out, "/vs exhange items with price serparated by ,");
 				out.flush();
 				out.close();
@@ -256,17 +263,8 @@ public class VirtualShop extends JavaPlugin{
 	public Material GetItem(String item)
 	{
 
-		Material type= Material.AIR;
-		try
-		{
-		  int id = Integer.parseInt(item);
-		  type = Material.getMaterial(id);
-		
-		} 
-		catch(Exception e)
-		{
-				type=Material.matchMaterial(item);
-		}
+		Material type=  Material.getMaterial(ItemDb.get(item));
+		if(type.equals(Material.AIR)) return null;
 		return type;
 	}
 	

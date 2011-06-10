@@ -81,8 +81,21 @@ public class ItemDb
 	}
 	
 	
+	public static ItemStack get(String id, int quantity) throws Exception {
+		ItemStack retval = get(id);
+		retval.setAmount(quantity);
+		return retval;
+	}
 
-	public static int get(String id)
+	public static ItemStack get(String id) throws Exception
+	{
+		ItemStack retval = new ItemStack(getUnsafe(id));
+		retval.setDurability(durabilities.containsKey(id) ? durabilities.get(id) : 0);
+		if (items.containsValue(retval.getTypeId()) || true) return retval;
+		throw new Exception("Unknown item numeric: " + retval);
+	}
+
+	private static int getUnsafe(String id) throws Exception
 	{
 		id = id.toLowerCase();
 		try
@@ -92,7 +105,7 @@ public class ItemDb
 		catch (NumberFormatException ex)
 		{
 			if (items.containsKey(id)) return items.get(id);
-			return 0;
+			throw new Exception("Unknown item name: " + id);
 		}
 	}
 }

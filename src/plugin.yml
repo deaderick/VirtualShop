@@ -15,3 +15,16 @@ commands:
          /vs list me
          /vs list <player>
          /vs exchange
+   shop:
+      description: Access VirtualShop.
+      usage: | 
+         /shop buy <amount> item
+         /shop sell <amount> <item> <price>
+         /shop sell <amount> hand <price>
+         /shop remove <item>
+         /shop price <item>
+         /shop list
+         /shop list <page>
+         /shop list me
+         /shop list <player>
+         /shop exchange

@@ -1,7 +1,6 @@
 package com.SwearWord.VirtualShop;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.sql.ResultSet;
@@ -68,7 +67,7 @@ public class VirtualShop extends JavaPlugin{
 		db.initialize();
 		if(!db.checkTable("stock"))
 		{
-			String query = "create table stock('id' integer primary key,'seller' varchar(80) not null,'item' integer not null, 'price' float not null,'amount' integer not null)";
+			String query = "create table stock('id' integer primary key,'damage' integer,'seller' varchar(80) not null,'item' integer not null, 'price' float not null,'amount' integer not null)";
 			db.createTable(query);
 		}
 		 
@@ -100,7 +99,7 @@ public class VirtualShop extends JavaPlugin{
 	
 	public boolean onCommand(CommandSender sender, Command cmd, String commandLabel, String[] args)	{
 
-		if(commandLabel.equalsIgnoreCase("vs"))
+		if(commandLabel.equalsIgnoreCase("vs") || commandLabel.equalsIgnoreCase("shop"))
 		{	
 			if(args.length>0)
 			{
@@ -154,19 +153,19 @@ public class VirtualShop extends JavaPlugin{
 						 return true;
 					 }
 					 String item = args[1].toUpperCase();
-					 Material type = GetItem(item);
+					 ItemStack type = GetItem(item);
 					 if(type==null)
 					 {
 					 	sender.sendMessage(prefix + "What is " + item + "?");
 					    return true;
 					 }
-					 GetPrice(sender,type);
+					 GetPrice(sender,type.getType());
 					 return true;
 				}
 				if(args[0].equalsIgnoreCase("remove") && args.length == 2)
 				{
 					String item = args[1].toUpperCase();
-					Material type = GetItem(item);
+					ItemStack type = GetItem(item);
 					if(type==null)
 					{
 						sender.sendMessage(prefix + "What is " + item + "?");
@@ -194,13 +193,18 @@ public class VirtualShop extends JavaPlugin{
 						sender.sendMessage(prefix + "The amount goes first.");
 						return true;
 					}
-					Material type = GetItem(item);
+					if(amount < 1)
+					{
+						sender.sendMessage(prefix + "Stop trying to cheat. Positive numbers, idiot.");
+						return true;
+					}
+					ItemStack type = GetItem(item,amount);
 					if(type==null)
 					{
 						sender.sendMessage(prefix + "What is " + item + "?");
 						return true;
 					}
-					BuyItem(sender, type, amount);
+					BuyItem(sender, type);
 					return true;
 					
 				}
@@ -214,24 +218,30 @@ public class VirtualShop extends JavaPlugin{
 						try
 						{
 						int amount = Integer.parseInt(args[1]);
+						if(amount < 1)
+						{
+							sender.sendMessage(prefix + "Stop trying to cheat. Positive numbers, idiot.");
+							return true;
+						}
 						double price = Double.parseDouble(args[3]);
 						String item = args[2].toUpperCase();
-						Material type;
+						ItemStack type;
+						/*
 						if(item.equalsIgnoreCase("hand"))
 						{
 							Player p = (Player)sender;
 							type = p.getInventory().getItemInHand().getType();
 						}
-						else
-						{
-							type = GetItem(item);
-						}
+						*/
+						
+						type = GetItem(item,amount);
+							
 						if(type==null)
 						{
 							sender.sendMessage(prefix + "What is " + item + "?");
 							return true;
 						}
-						SellItem(sender, type, price, amount);
+						SellItem(sender, type, price);
 						return true;
 					
 					}
@@ -260,12 +270,21 @@ public class VirtualShop extends JavaPlugin{
 		}
 	}
 	
-	public Material GetItem(String item)
+	public ItemStack GetItem(String item)
 	{
-
-		Material type=  Material.getMaterial(ItemDb.get(item));
-		if(type.equals(Material.AIR)) return null;
-		return type;
+		return GetItem(item,0);
+		
+	}
+	
+	public ItemStack GetItem(String item, int amount)
+	{
+		ItemStack type;
+		try {
+			type = ItemDb.get(item,amount);
+			return type;
+		} catch (Exception e) {
+			return null;
+		}
 	}
 	
 	public void GetPrice(CommandSender sender,Material item)
@@ -287,7 +306,8 @@ public class VirtualShop extends JavaPlugin{
 			sender.sendMessage(prefix + "No one is selling " + item.name());
 		}
 	}
-	public void RemoveItem(CommandSender sender, Material item)
+
+	public void RemoveItem(CommandSender sender, ItemStack item)
 	{
 		if(!(sender instanceof Player))
 		{
@@ -296,31 +316,36 @@ public class VirtualShop extends JavaPlugin{
 		}
 		Player player = (Player)sender;
 		String name = player.getName();
-		String query = "select * from stock where seller = '" + name + "' and item =" + item.getId();
+		String query = "select * from stock where seller = '" + name + "' and item =" + item.getTypeId();
 		ResultSet r = db.sqlQuery(query);
-		int amount=0;
-		try {
+		int total = 0;
+		InventoryManager i = new InventoryManager(player);
+		try 
+		{
 			while(r.next())
 			{
-				amount += r.getInt("amount");
+				int amount = r.getInt("amount");
+				total += amount;
+				item.setAmount(amount);
+				item.setDurability((short)r.getInt("damage"));
+				i.addItem(item);
 			}
-		} catch (SQLException e) {
+		} 
+		catch (SQLException e) 
+		{
 			
 		}
-		if(amount == 0)
+		if(total == 0)
 		{
-			player.sendMessage(prefix + "You do not have any " + item.name() + " for sale.");
+			player.sendMessage(prefix + "You do not have any " + item.getType().name() + " for sale.");
 			return;
 		}
-		InventoryManager i = new InventoryManager(player);
-		ItemStack stack = new ItemStack(item,amount);
-		i.addItem(stack);
-		query = "delete from stock where seller = '" + name + "' and item =" + item.getId();
+		query = "delete from stock where seller = '" + name + "' and item =" + item.getTypeId();
 		db.deleteQuery(query);
-		player.sendMessage(prefix + amount + " " + item.name() + " was taken back.");
+		player.sendMessage(prefix + total + " " + item.getType().name() + " was taken back.");
 	}
 	
-	public void SellItem(CommandSender sender,Material item,double price, int amount)
+	public void SellItem(CommandSender sender,ItemStack item,double price)
 	{
 		if(!(sender instanceof Player))
 		{
@@ -329,31 +354,30 @@ public class VirtualShop extends JavaPlugin{
 		}
 		Player player = (Player)sender;
 		InventoryManager im = new InventoryManager(player);
-		ItemStack stack = new ItemStack(item,amount);
-		if(!im.contains(stack))
+		if(!im.contains(item,true,true))
 		{
-			player.sendMessage(prefix + "You do not have " + amount + " " +item.name());
+			player.sendMessage(prefix + "You do not have " + item.getAmount() + " " +item.getType().name());
 			return;
 		}
-		String query = "insert into stock(seller,item,amount,price) values('" +player.getName() +"',"+ item.getId() + ","+amount +","+price+")";
+		String query = "insert into stock(seller,item,amount,price,damage) values('" +player.getName() +"',"+ item.getType().getId() + ","+item.getAmount() +","+price+"," + item.getDurability()+")";
 		db.insertQuery(query);
-		im.remove(stack);
-
-		player.getServer().broadcastMessage(prefix + player.getName() + " has put " + amount + " "+ item.name() + " for sale for " + iConomy.format(price) + " each.");
+		im.remove(item);
+		player.getServer().broadcastMessage(prefix + player.getName() + " has put " + item.getAmount() + " "+ item.getType().name() + " for sale for " + iConomy.format(price) + " each.");
 	}
 	
-	public void BuyItem(CommandSender sender, Material item, int amount)
+	public void BuyItem(CommandSender sender, ItemStack item)
 	{
 		if(!(sender instanceof Player))
 		{
 			sender.sendMessage(prefix + "You are not in game");
 			return;
 		}
+		int amount = item.getAmount();
 		int original = amount;
 		Player player = (Player)sender;
 		Holdings money = iConomy.getAccount(player.getName()).getHoldings();
 		float spent =0;
-		String query = "select * from stock where item=" + item.getId()+ " order by price asc";
+		String query = "select * from stock where item=" + item.getTypeId()+ " order by price asc";
 		ResultSet r = db.sqlQuery(query);
 		InventoryManager im = new InventoryManager(player);
 		int rows =0;
@@ -362,6 +386,7 @@ public class VirtualShop extends JavaPlugin{
 			{
 				rows++;
 				int id = r.getInt("id");
+				int damage = r.getInt("damage");
 				int quant = r.getInt("amount");
 				float price = r.getFloat("price");
 				float cost = quant*price;
@@ -389,9 +414,10 @@ public class VirtualShop extends JavaPlugin{
 					Player s = this.getServer().getPlayer(seller);
 					if(s!=null)
 					{
-						s.sendMessage(prefix + player.getName() + " just bought " + quant + " " + item.name() + " for " + cost);
+						s.sendMessage(prefix + player.getName() + " just bought " + quant + " " + item.getType().name() + " for " + cost);
 					}
-					ItemStack stack = new ItemStack(item,quant);
+					ItemStack stack = new ItemStack(item.getType(),quant);
+					stack.setDurability((short)damage);
 					im.addItem(stack);
 					query = "delete from stock where id="+id;
 					db.deleteQuery(query);
@@ -417,9 +443,9 @@ public class VirtualShop extends JavaPlugin{
 						Player s = this.getServer().getPlayer(seller);
 						if(s!=null)
 						{
-							s.sendMessage(prefix + player.getName() + " just bought " + amount + " " + item.name() + " for " + cost);
+							s.sendMessage(prefix + player.getName() + " just bought " + amount + " " + item.getType().name() + " for " + cost);
 						}
-						ItemStack stack = new ItemStack(item,amount);
+						ItemStack stack = new ItemStack(item.getType(),amount);
 						im.addItem(stack);
 						amount = 0;
 						query = "update stock set amount="+left+" where id=" + id;
@@ -435,11 +461,11 @@ public class VirtualShop extends JavaPlugin{
 		}
 		if(rows == 0)
 		{
-			player.sendMessage(prefix + "There is no " + item.name()+ " for sale.");
+			player.sendMessage(prefix + "There is no " + item.getType().name()+ " for sale.");
 		}
 		else
 		{
-			player.sendMessage(prefix + "Managed to buy " + (original-amount) + " " + item.name() + " for " + iConomy.format(spent));
+			player.sendMessage(prefix + "Managed to buy " + (original-amount) + " " + item.getType().name() + " for " + iConomy.format(spent));
 		}
 	}
 	

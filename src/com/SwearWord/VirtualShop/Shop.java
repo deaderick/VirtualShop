@@ -248,7 +248,7 @@ public class Shop
 					{
 						s.sendMessage(prefix + player.getName() + " just bought " + canbuy + " " + item.getType().name() + " for " + cost);
 					}
-					ItemStack stack = new ItemStack(item.getType(),quant);
+					ItemStack stack = new ItemStack(item.getType(),canbuy);
 					stack.setDurability((short)damage);
 					im.addItem(stack);
 					int left = quant-canbuy;
@@ -263,7 +263,7 @@ public class Shop
 						db.updateQuery(query);
 						
 					}
-					query = "insert into transactions(seller,buyer,item,amount,cost) values('" +s.getName() +"','"+ player.getName() + "'," + item.getType().getId() + ","+ canbuy +","+cost+")";
+					query = "insert into transactions(seller,buyer,item,amount,cost) values('" +seller +"','"+ player.getName() + "'," + item.getType().getId() + ","+ canbuy +","+cost+")";
 					db.insertQuery(query);
 
 				}
@@ -296,7 +296,7 @@ public class Shop
 						amount = 0;
 						query = "update stock set amount="+left+" where id=" + id;
 						db.updateQuery(query);
-						query = "insert into transactions(seller,buyer,item,amount,cost) values('" +s.getName() +"','"+ player.getName() + "'," + item.getType().getId() + ","+ canbuy +","+cost+")";
+						query = "insert into transactions(seller,buyer,item,amount,cost) values('" +seller +"','"+ player.getName() + "'," + stack.getType().getId() + ","+ canbuy +","+cost+")";
 						db.insertQuery(query);
 					
 				}
@@ -339,9 +339,9 @@ public class Shop
 		try {
 			while(r.next())
 			{
-				String result = r.getString("seller")+" sold "+r.getInt("amount")+" "+Material.getMaterial(r.getInt("item")) + " for "+iConomy.format(r.getFloat("cost")) + " to " + r.getString("buyer");
+				String result = ChatColor.RED + r.getString("seller")+ ChatColor.WHITE + " sold "+ ChatColor.GOLD + r.getInt("amount")+" "+ ChatColor.DARK_GREEN + Material.getMaterial(r.getInt("item")) + ChatColor.WHITE + " for "+ ChatColor.YELLOW + iConomy.format(r.getFloat("cost")) + ChatColor.WHITE + " to " + ChatColor.AQUA + r.getString("buyer");
 				//String result = r.getString("item") + " " + r.getFloat("price");
-				sender.sendMessage(prefix + result);
+				sender.sendMessage(result);
 			}
 		} catch (SQLException e) {
 			// TODO Auto-generated catch block

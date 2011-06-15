@@ -1,12 +1,5 @@
 package com.SwearWord.VirtualShop;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.HashMap;
-import java.util.Properties;
 import java.util.logging.Logger;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
@@ -14,12 +7,13 @@ import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.java.JavaPlugin;
 
-import com.alta189.sqllitelib.sqlCore;
+import com.iConomy.iConomy;
+import com.nijiko.permissions.PermissionHandler;
+import com.nijikokun.bukkit.Permissions.Permissions;
 
-import com.iConomy.*;
-import com.iConomy.system.Holdings;
 
 public class VirtualShop extends JavaPlugin
 {
@@ -29,12 +23,29 @@ public class VirtualShop extends JavaPlugin
 	public File folder = new File("plugins/VirtualShop");
 	public File config = new File("plugins/VirtualShop/config.txt");
 	private Shop Shop;
+	PermissionHandler ph;
 	
 	public void onEnable()
 	{ 
 		log.info(prefix+"VirtualShop loading.");
 		Shop = new Shop();
+		setupPermissions();
 	} 
+	private void setupPermissions() 
+	{
+	      Plugin permissionsPlugin = this.getServer().getPluginManager().getPlugin("Permissions");
+
+	      if (this.ph == null) 
+	      {
+	          if (permissionsPlugin != null) {
+	              this.ph = ((Permissions)permissionsPlugin).getHandler();
+	          } else {
+	              return;
+	          }
+	      }
+	      
+	}
+
 	
 	public void onDisable()
 	{ 
@@ -47,14 +58,52 @@ public class VirtualShop extends JavaPlugin
 		{	
 			if(args.length>0)
 			{
+				if(args[0].equalsIgnoreCase("rates"))
+				{
+					for(int i=0;i<Shop.exchanges.size();i++)
+					{
+						String s = "";
+						if(sender instanceof Player)
+						{
+							s = ((Player)(sender)).getName();
+						}
+						int id = (Integer)Shop.exchanges.keySet().toArray()[i];
+						Material m = Material.getMaterial(id);
+						double price = Shop.CalculatePrice(id, s,1);
+						sender.sendMessage(prefix + "Sell " + m.name() + ": " + iConomy.format(price));
+						sender.sendMessage(prefix + "Buy " + m.name() + ": " + iConomy.format(price + Shop.multiplier));
+					}
+					return true;
+					
+				}
+				if(args[0].equalsIgnoreCase("invest"))
+				{
+					if(args.length < 2)
+					{
+						sender.sendMessage(prefix + "You must specify amount of money to invest");
+						return true;
+					}
+					String p = args[1];
+					int amount = 0;
+					try
+					{
+						amount = Integer.parseInt(p);
+					}
+					catch (Exception ex)
+					{
+						sender.sendMessage(prefix + "That is not a number.");
+						return true;
+					}
+					Shop.Invest(amount, sender);
+					return true;
+				}
 				if(args[0].equalsIgnoreCase("exchange") && (sender instanceof Player))
 				{
 					Player p = (Player)sender;
 					for(int i=0;i<Shop.exchanges.size();i++)
 					{
 						int id = (Integer)Shop.exchanges.keySet().toArray()[i];
-						double price = (Double)Shop.exchanges.get(id);
-						Shop.Exchange(new ItemStack(id),p,price);
+						Shop.Exchange(new ItemStack(id),p);
 					}
 					return true;
 					
@@ -63,13 +112,13 @@ public class VirtualShop extends JavaPlugin
 				{
 					if(args.length == 1)
 					{
-						Shop.ListTransactions(sender, "select * from transactions");
+						Shop.ListTransactions(sender, "select * from transactions order by id desc limit 0,10");
 						return true;
 					}
 					if(args.length == 2)
 					{
 						String target = args[1];
-						Shop.ListTransactions(sender, "select * from transactions where seller like '%" + target+"%' OR buyer like '%" + target +"%'");
+						Shop.ListTransactions(sender, "select * from transactions where seller like '%" + target+"%' OR buyer like '%" + target +"%' order by id desc limit 0,10");
 						return true;
 					}
 					
@@ -136,6 +185,11 @@ public class VirtualShop extends JavaPlugin
 				}
 				if(args[0].equalsIgnoreCase("buy"))
 				{
+					if(ph != null && (sender instanceof Player) && ph.has((Player)sender, "VirtualShop.nobuy"))
+					{
+						sender.sendMessage(prefix + "You may not purchase items.");
+						return true;
+					}
 					if(args.length != 3)
 					{
 						sender.sendMessage(prefix + "Proper usage is /vs buy <amount> <item>");
@@ -169,6 +223,11 @@ public class VirtualShop extends JavaPlugin
 				}
 				if(args[0].equalsIgnoreCase("sell")&& sender instanceof Player)
 				{
+					if(ph != null && (sender instanceof Player) && ph.has((Player)sender, "VirtualShop.nosell"))
+					{
+						sender.sendMessage(prefix + "You may not sell items.");
+						return true;
+					}
 					if(args.length != 4)
 					{
 						sender.sendMessage(prefix + "Proper usage is /vs sell <amount> <item> <price>");

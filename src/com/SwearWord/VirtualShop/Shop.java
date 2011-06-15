@@ -6,7 +6,11 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.Properties;
 import java.util.logging.Logger;
 
@@ -29,6 +33,7 @@ public class Shop
 	public HashMap exchanges = new HashMap(); 
 	public File config = new File("plugins/VirtualShop/config.txt");
 	public File folder = new File("plugins/VirtualShop");
+	public float multiplier= 0.05f;
 	
 	public Shop()
 	{
@@ -46,7 +51,7 @@ public class Shop
 			{
 				config.createNewFile();
 				FileOutputStream out = new FileOutputStream(config);
-				properties.put("items", "266;250,264;1000,339;10");
+				properties.put("items", "266,250;264,1000;339,10");
 				properties.store(out, "/vs exhange items with price serparated by ,");
 				out.flush();
 				out.close();
@@ -84,10 +89,10 @@ public class Shop
 		try {
 			FileInputStream is = new FileInputStream(config);
 			properties.load(is);
-			String[] splits = properties.getProperty("items").split(",");
+			String[] splits = properties.getProperty("items").split(";");
 			for(int i=0;i<splits.length;i++)
 			{
-				String[] line = splits[i].split(";");
+				String[] line = splits[i].split(",");
 				int id = Integer.parseInt(line[0]);
 				double price = Double.parseDouble(line[1]);
 				exchanges.put(id, price);
@@ -101,6 +106,91 @@ public class Shop
 		db = new sqlCore(log,prefix, "VirtualShop",folder.getPath());
 		db.initialize();
 		
+	}
+	
+	public void Invest(double amount, CommandSender sender)
+	{
+		if(!(sender instanceof Player))
+		{
+			sender.sendMessage(prefix + "You are not a player.");
+			return;
+		}
+		Player p = (Player)sender;
+		Holdings h = iConomy.getAccount(p.getName()).getHoldings();
+		if(!(h.hasEnough(amount)))
+		{
+			p.sendMessage(prefix + "You can't invest that much!");
+			return;
+		}
+		InventoryManager im = new InventoryManager(p);
+		Double[] c = (Double[])exchanges.values().toArray(new Double[exchanges.size()]);
+		Arrays.sort(c,Collections.reverseOrder());
+		for(int i=0;i<c.length;i++)
+		{
+			double price = c[i];
+			int id = GetKey(price);
+			price = CalculatePrice(id, p.getName(),1) + multiplier;
+			int count = (int)((Math.sqrt(4*price*price - 4*price*multiplier + 8 * amount * multiplier + multiplier * multiplier) - 2*price + multiplier)/(2*multiplier));
+			if(count > 0)
+			{
+				double cost = count*(CalculatePrice(id,p.getName(),count)+multiplier);
+				amount -= cost;
+				h.subtract(cost);
+				ItemStack is = new ItemStack(id,count);
+				im.addItem(is);
+				p.sendMessage(prefix + "Invested " + iConomy.format(cost) + " in " + count + " " + is.getType().name());
+				String query = "insert into transactions(seller,buyer,item,amount,cost) values('Exchange','"+ p.getName() + "'," + is.getType().getId() + ","+ is.getAmount() +","+cost+")";
+				db.insertQuery(query);
+			}
+		}
+		
+	}
+
+	public double CalculatePrice(int id, String p, int trans)
+	{
+		try
+		{
+		String query = "select amount from transactions where item = " + id + " and buyer = 'Exchange'";
+		ResultSet rs = db.sqlQuery(query);
+		int sold = 0;  
+		while ( rs.next() )  
+		{  
+		    sold += rs.getInt("amount");  
+		}
+		
+		query = "select amount from transactions where item = " + id + " and seller = 'Exchange'";
+		rs = db.sqlQuery(query);
+		int bought = 0;  
+		while ( rs.next() )  
+		{  
+
+		    bought += rs.getInt("amount"); 
+		}
+		int ratio = bought - sold;
+		float sign = Math.signum(trans);
+		trans = Math.abs(trans);
+		double base = (Double)exchanges.get(id);
+		base = base + ratio*multiplier;
+		return (base*trans + sign*multiplier*(trans * (trans-1)/2))/trans;
+		
+		}
+		catch (Exception ex)
+		{
+			
+		}
+		return 0;
+	}
+	
+	private int GetKey(double cost) 
+	{
+		Integer[] keys = (Integer[]) exchanges.keySet().toArray(new Integer[exchanges.size()]);
+	     for (int i=0;i<exchanges.size();i++) 
+	     {
+	    	 int key = keys[i];
+	    	 if(exchanges.get(key).equals(cost)) return key;
+	    	 
+	     }
+	     return 0;
 	}
 	
 	public void GetPrice(CommandSender sender,Material item)
@@ -123,10 +213,11 @@ public class Shop
 		}
 	}
 	
-	public void Exchange(ItemStack type, Player p, double price)
+	public void Exchange(ItemStack type, Player p)
 	{
 		InventoryManager im = new InventoryManager(p);
 		ItemStack items = im.quantify(type);
+		double price = (Double)CalculatePrice(type.getTypeId(),p.getName(),-items.getAmount());
 		double payment = items.getAmount() * price;
 		iConomy.Accounts.get(p.getName()).getHoldings().add(payment);
 		im.remove(items);

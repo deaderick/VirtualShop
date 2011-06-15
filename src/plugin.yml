@@ -15,6 +15,8 @@ commands:
          /vs list me
          /vs list <player>
          /vs exchange
+         /vs log
+         /vs log <player>
    shop:
       description: Access VirtualShop.
       usage: | 
@@ -28,3 +30,5 @@ commands:
          /shop list me
          /shop list <player>
          /shop exchange
+         /shop log
+         /shop log <player>

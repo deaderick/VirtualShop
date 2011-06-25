@@ -46,23 +46,8 @@ public class Shop
 		if(!folder.exists()){
 			folder.mkdir();
 		}
-		if(!config.exists()){
-			try 
-			{
-				config.createNewFile();
-				FileOutputStream out = new FileOutputStream(config);
-				properties.put("items", "266,250;264,1000;339,10");
-				properties.store(out, "/vs exhange items with price serparated by ,");
-				out.flush();
-				out.close();
-				
-			} 
-			catch (IOException e) 
-			{
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}			
-		}
+
+		if(!config.exists())createconfig();
 		loadconfig();
 
 		db = new sqlCore(log,prefix, "VirtualShop",folder.getPath());
@@ -84,11 +69,35 @@ public class Shop
 		db.close();
 	}
 	
+	private void createconfig()
+	{
+			try 
+			{
+				log.info(prefix + "Generating new config file.");
+				config.createNewFile();
+				FileOutputStream out = new FileOutputStream(config);
+				properties.put("items", "266,500");
+				properties.put("broadcast", "true");
+				properties.store(out, "items: /vs exchange item(s) item1,price1;item2,price2" + System.getProperty("line.separator") + "broadcast: true broadcasts message to players when items is up for sale.");
+				out.flush();
+				out.close();
+				
+			} 
+			catch (IOException e) 
+			{
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}			
+		}
+	
+	
 	private void loadconfig() 
 	{
 		try {
 			FileInputStream is = new FileInputStream(config);
 			properties.load(is);
+			is.close();
+			if(!properties.containsKey("broadcast")) createconfig();
 			String[] splits = properties.getProperty("items").split(";");
 			for(int i=0;i<splits.length;i++)
 			{
@@ -97,14 +106,10 @@ public class Shop
 				double price = Double.parseDouble(line[1]);
 				exchanges.put(id, price);
 			}
-			is.close();
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-
-		db = new sqlCore(log,prefix, "VirtualShop",folder.getPath());
-		db.initialize();
 		
 	}
 	
@@ -284,7 +289,15 @@ public class Shop
 		String query = "insert into stock(seller,item,amount,price,damage) values('" +player.getName() +"',"+ item.getType().getId() + ","+item.getAmount() +","+price+"," + item.getDurability()+")";
 		db.insertQuery(query);
 		im.remove(item);
-		player.getServer().broadcastMessage(prefix + player.getName() + " has put " + item.getAmount() + " "+ item.getType().name() + " for sale for " + iConomy.format(price) + " each.");
+		if(properties.getProperty("broadcast")=="true") 
+		{
+			player.getServer().broadcastMessage(prefix + player.getName() + " has put " + item.getAmount() + " "+ item.getType().name() + " for sale for " + iConomy.format(price) + " each.");
+		}
+		else
+		{
+			player.sendMessage(prefix + "You have put " + item.getAmount() + " "+ item.getType().name() + " for sale for " + iConomy.format(price) + " each.");
+
+		}
 	}
 	
 	public void BuyItem(CommandSender sender, ItemStack item)

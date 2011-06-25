@@ -185,7 +185,7 @@ public class VirtualShop extends JavaPlugin
 				}
 				if(args[0].equalsIgnoreCase("buy"))
 				{
-					if(ph != null && (sender instanceof Player) && ph.has((Player)sender, "VirtualShop.nobuy"))
+					if(ph != null && (sender instanceof Player) && ph.has((Player)sender, "VirtualShop.nobuy") && !ph.has((Player)sender,"VirtualShop.override"))
 					{
 						sender.sendMessage(prefix + "You may not purchase items.");
 						return true;
@@ -223,7 +223,7 @@ public class VirtualShop extends JavaPlugin
 				}
 				if(args[0].equalsIgnoreCase("sell")&& sender instanceof Player)
 				{
-					if(ph != null && (sender instanceof Player) && ph.has((Player)sender, "VirtualShop.nosell"))
+					if(ph != null && (sender instanceof Player) && ph.has((Player)sender, "VirtualShop.nosell") && !ph.has((Player)sender,"VirtualShop.override"))
 					{
 						sender.sendMessage(prefix + "You may not sell items.");
 						return true;

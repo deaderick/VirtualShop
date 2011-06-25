@@ -242,6 +242,10 @@ public class VirtualShop extends JavaPlugin
 							return true;
 						}
 						double price = Double.parseDouble(args[3]);
+						if(price < 1)
+						{
+							sender.sendMessage(prefix + "Stop trying to cheat. Positive numbers, idiot.");
+						}
 						String item = args[2].toUpperCase();
 						ItemStack type;
 						/*

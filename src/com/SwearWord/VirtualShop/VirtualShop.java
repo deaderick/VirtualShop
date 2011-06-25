@@ -245,6 +245,7 @@ public class VirtualShop extends JavaPlugin
 						if(price < 1)
 						{
 							sender.sendMessage(prefix + "Stop trying to cheat. Positive numbers, idiot.");
+							return true;
 						}
 						String item = args[2].toUpperCase();
 						ItemStack type;

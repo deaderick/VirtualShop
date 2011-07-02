@@ -18,7 +18,8 @@ public class VSproperties
 		MYSQL_HOST,
 		MYSQL_PORT,
 		MYSQL_DATABASE,
-		BROADCAST
+		BROADCAST,
+		EXCHANGE_ITEM
 		
 	}
 	
@@ -51,7 +52,9 @@ public class VSproperties
 		file.createNewFile();
 		config = new Configuration(file);
 		config.setProperty("broadcast-offers", true);
-		config.setProperty("exchange-item", 266);
+		config.setProperty("Exchange.exchange-item", 266);
+		config.getDouble("Exchange.exchange-base-price", 250.0d);
+		config.setProperty("Exchange.multiplier", 0.05);
 		config.setProperty("using-MySQL", false);
 		config.setProperty("MySQL.username", "root");
 		config.setProperty("MySQL.password", "password");
@@ -66,16 +69,25 @@ public class VSproperties
 		config.save();
 	}
 	
+	public static Integer getExchangeItem()
+	{
+		return config.getInt("Exchange.exchange-item", 266);
+	}
+
+	public static Double getExchangeMultipier()
+	{
+		return config.getDouble("Exchange.exchange-multiplier", 0.05d);
+	}
+
+	public static Double getExchangeBase()
+	{
+		return config.getDouble("Exchange.exchange-base-price", 250.0d);
+	}
+	
 	public static Boolean BroadcastOffers()
 	{
 		return config.getBoolean("broadcast-offers", true);
 	}
-	
-	public static Integer ExchangeItem()
-	{
-		return config.getInt("exchange-item", 226);
-	}
-	
 	public static Boolean UsingMySQL()
 	{
 		return config.getBoolean("using-MySQL", false);

@@ -85,6 +85,21 @@ public class VirtualShop extends JavaPlugin
 			Shop.RemoveItems(sender, args);
 			return true;
 		}
+		if(args[0].equalsIgnoreCase("rates"))
+		{
+			Shop.PrintRates(sender, args);
+			return true;
+		}
+		if(args[0].equalsIgnoreCase("exchange"))
+		{
+			Shop.Exchange(sender);
+			return true;
+		}
+		if(args[0].equalsIgnoreCase("invest"))
+		{
+			Shop.Invest(sender,args);
+			return true;
+		}
 		return false;
 	}
 }

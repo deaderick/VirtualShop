@@ -2,6 +2,8 @@ package com.SwearWord.VirtualShop;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.Arrays;
+import java.util.Collections;
 
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
@@ -319,6 +321,133 @@ public class Shop
 		DatabaseManager.RemoveSellerItem(player, item);
 		Response.MsgPlayer(sender, "Removed " + Response.FormatAmount(total) + " " + Response.FormatItem(args[1]));
 		
+	}
+	
+	public static void PrintRates(CommandSender sender, String args[])
+	{
+		Material m = Material.getMaterial(VSproperties.getExchangeItem());
+		try
+		{
+			double price = CalculateExchangeRates(1);
+			Response.MsgPlayer(sender, "Sell " + Response.FormatItem(m.name()) + ": " + Response.FormatPrice((float)price));
+			Response.MsgPlayer(sender, "Buy " + Response.FormatItem(m.name()) + ": " + Response.FormatPrice((float)(price + VSproperties.getExchangeMultipier())));
+		}
+		catch(Exception e)
+		{
+			e.printStackTrace();
+			return;
+		}
+	
+	}
+	
+	private static double CalculateExchangeRates(int trans) throws Exception
+	{
+		int id = VSproperties.getExchangeItem();
+		double multiplier = VSproperties.getExchangeMultipier();
+		double base = VSproperties.getExchangeBase();
+		String query = "select amount from transactions where item = " + id + " and buyer = 'Exchange'";
+		ResultSet rs = DatabaseManager.SelectQuery(query);
+		int sold = 0;  
+		while ( rs.next() )  
+		{  
+		    sold += rs.getInt("amount");  
+		}
+		
+		query = "select amount from transactions where item = " + id + " and seller = 'Exchange'";
+		rs = DatabaseManager.SelectQuery(query);
+		int bought = 0;  
+		while ( rs.next() )  
+		{  
+			    bought += rs.getInt("amount"); 
+		}
+		int ratio = bought - sold;
+		float sign = Math.signum(trans);
+		trans = Math.abs(trans);
+		base = base + ratio*multiplier;
+		return (base*trans + sign*multiplier*(trans * (trans-1)/2))/trans;
+			
+	}
+	
+	public static void Exchange(CommandSender sender)
+	{
+		if(!(sender instanceof Player))
+		{
+			Response.DenyConsole(sender);
+			return;
+		}
+		ItemStack type = new ItemStack(VSproperties.getExchangeItem());
+		
+		try {
+			ExchangeItem(type,(Player)sender);
+		} catch (Exception e) {
+			sender.sendMessage("An error ocurred.");
+		}
+	}
+	
+	public static void Invest(CommandSender sender, String args[])
+	{
+		if(!(sender instanceof Player))
+		{
+			Response.DenyConsole(sender);
+			return;
+		}
+		if(args.length<2)
+		{
+			Response.MsgPlayer(sender, "Proper usage is /vs invest <money>");
+			return;
+		}
+		Player p = (Player)sender;
+		float amount = ParseFloat(args[1]);
+		if(amount < 0)
+		{
+			Response.NumberFormat(sender);
+		}
+		Holdings h = iConomy.getAccount(p.getName()).getHoldings();
+		if(!(h.hasEnough(amount)))
+		{
+			Response.MsgPlayer(sender,"You can't invest that much!");
+			return;
+		}
+		try
+		{
+			InventoryManager im = new InventoryManager(p);
+			double price = VSproperties.getExchangeBase();
+			int id = VSproperties.getExchangeItem();
+			double multiplier = VSproperties.getExchangeMultipier();
+			price = CalculateExchangeRates(1) + multiplier;
+			int count = (int)((Math.sqrt(4*price*price - 4*price*multiplier + 8 * amount * multiplier + multiplier * multiplier) - 2*price + multiplier)/(2*multiplier));
+			if(count > 0)
+			{
+				double cost = count*(CalculateExchangeRates(count)+multiplier);
+				amount -= cost;
+				h.subtract(cost);
+				ItemStack is = new ItemStack(id,count);
+				im.addItem(is);
+				Response.MsgPlayer(sender,"Invested " + Response.FormatAmount((int)cost) + " in " + Response.FormatAmount(count) + " " + Response.FormatItem(is.getType().name()));
+				DatabaseManager.LogTransaction("Exchange", p.getName(), is.getTypeId(), is.getAmount(), (float)cost, (short)0);
+			}
+		}
+		catch (Exception e)
+		{
+			Response.MsgPlayer(sender, "An error occurred. Ask owner to check config");
+		}
+		
+	}
+	
+	private static void ExchangeItem(ItemStack type, Player p) throws Exception
+	{
+		
+		InventoryManager im = new InventoryManager(p);
+		ItemStack items = im.quantify(type);
+		double price = (Double)CalculateExchangeRates(-items.getAmount());
+		double payment = items.getAmount() * price;
+		iConomy.Accounts.get(p.getName()).getHoldings().add(payment);
+		im.remove(items);
+		if(items.getAmount() > 0)
+		{
+			Response.MsgPlayer(p,"Exchanged " + Response.FormatAmount(items.getAmount())+ " " + Response.FormatItem(type.getType().name()) + " for " + Response.FormatPrice((float)payment));
+			DatabaseManager.LogTransaction(p.getName(),"Exchange", type.getTypeId(), items.getAmount(), (float)payment, (short)0);
+		}
 	}
 	
 	private static Integer ParseInteger(String s)

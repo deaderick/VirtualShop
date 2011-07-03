@@ -226,15 +226,44 @@ public class Shop
 	public static void ListTransactions(CommandSender sender, String[] args)
 	{
 		ResultSet r;
-		if(args.length > 1) r = DatabaseManager.GetTransactions(args[1]);
-		else r = DatabaseManager.GetTransactions();
+		if(args.length > 1)
+		{
+			int page = ParseInteger(args[1]);
+			if(page > 0)
+			{
+				page = (page-1)*9;
+				r = DatabaseManager.GetTransactions(page);
+			}
+			else
+			{
+				String search = args[1];
+				if(args.length > 2)
+				{
+					page = ParseInteger(args[2]);
+					if(page < 0) page = 1;
+					page = (page - 1) * 9;
+					r = DatabaseManager.GetTransactions(search, page);
+				}
+				else
+				{
+					r = DatabaseManager.GetTransactions(search,0);
+				}
+			}
+		}
+		else r = DatabaseManager.GetTransactions(0);
 		try 
 		{
+			int count = 0;
 			while(r.next())
 			{
-				Response.LogMessage("Parsing row.");
+				if(count==9)
+				{
+					Response.PlainMsgPlayer(sender, "And more...");
+					break;
+				}
 				String name = ItemDb.reverseLookup(new ItemStack(r.getInt("item"), 0, (short)r.getInt("damage")));
 				Response.SendLogEvent(sender, r.getString("seller"), r.getInt("amount"), name, r.getFloat("cost"),r.getString("buyer"));
+				count++;
 			}
 		} 
 		catch (SQLException e) 
@@ -248,8 +277,15 @@ public class Shop
 		ResultSet r = DatabaseManager.GetCheapest();
 		int start =1;
 		if(args.length >1) start =ParseInteger(args[1]);
-		if(start < 0) start = 1;
-		start = (start-1) * 9;
+		if(start < 0)
+		{
+			String seller = args[1];
+			if(args.length > 2) start = ParseInteger(args[2]);
+			if(start < 0) start = 1;
+			start = (start -1) * 9;
+			r = DatabaseManager.SearchBySeller(seller, start);
+		}
+		else start = (start-1) * 9;
 		try 
 		{
 			int count =0;

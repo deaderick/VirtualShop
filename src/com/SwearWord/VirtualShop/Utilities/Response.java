@@ -133,4 +133,9 @@ public class Response
 	{
 		return ChatColor.AQUA + buyer.toString() + ChatColor.WHITE;
 	}
+	
+	public static void NoPermissions(CommandSender sender)
+	{
+		MsgPlayer(sender, "You do not have permission to do this");
+	}
 }

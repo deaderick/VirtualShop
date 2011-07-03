@@ -197,14 +197,14 @@ public class DatabaseManager
 		InsertQuery(query);
 	}
 	
-	public static ResultSet GetTransactions()
+	public static ResultSet GetTransactions(Integer page)
 	{
-		return SelectQuery("select * from transactions order by id desc limit 0,10");
+		return SelectQuery("select * from transactions order by id desc limit " + page + ",10");
 	}
 	
-	public static ResultSet GetTransactions(String search)
+	public static ResultSet GetTransactions(String search, Integer page)
 	{
-		return SelectQuery("select * from transactions where seller like '%" + search +"%' OR buyer like '%" + search +"%' order by id desc limit 0,10");
+		return SelectQuery("select * from transactions where seller like '%" + search +"%' OR buyer like '%" + search +"%' order by id desc limit " + page +",10");
 	}
 
 	public static ResultSet GetCheapest()
@@ -217,6 +217,12 @@ public class DatabaseManager
 		return SelectQuery("select f.* from (select item,min(price) as minprice from stock group by item) as x inner join stock as f on f.item = x.item and f.price = x.minprice");
 	}
 
+	public static ResultSet SearchBySeller(String seller, int page)
+	{
+		return SelectQuery("select * from stock where seller like '%" + seller +  "%'");
+	}
+	
+	
 	public static ResultSet SelectSellerItem(Player player, ItemStack item)
 	{
 		String query = "select * from stock where seller = '" + player.getName() + "' and item =" + item.getTypeId() + " and damage=" + item.getDurability();

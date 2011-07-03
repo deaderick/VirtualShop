@@ -22,6 +22,7 @@ import com.nijikokun.bukkit.Permissions.Permissions;
 public class VirtualShop extends JavaPlugin
 {
 	public File folder = new File("plugins/VirtualShop");
+	private PermissionHandler ph;
 	
 	@Override
 	public void onDisable() 
@@ -35,6 +36,7 @@ public class VirtualShop extends JavaPlugin
 		{
 			Response.Initialize(this.getServer());
 			ItemDb.load(folder, "items.csv");
+			setupPermmissions();
 			if(VSproperties.Initialize() && DatabaseManager.Initialize())
 			{
 				Response.LogMessage("VirtualShop successfully loaded.");
@@ -60,13 +62,23 @@ public class VirtualShop extends JavaPlugin
 			Shop.DisplayPrices(sender, args);
 			return true;
 		}
-		if(args[0].equalsIgnoreCase("sell"))
+		if(args[0].equalsIgnoreCase("sell") && !HasPermission(sender, "VirtualShop.nosell"))
 		{
+			if(HasPermission(sender, "VirtualShop.nosell"))
+			{
+				Response.NoPermissions(sender);
+				return true;
+			}
 			Shop.SellItem(sender, args);
 			return true;
 		}
 		if(args[0].equalsIgnoreCase("buy"))
 		{
+			if(HasPermission(sender, "VirtualShop.nobuy"))
+			{
+				Response.NoPermissions(sender);
+				return true;
+			}
 			Shop.BuyItem(sender, args);
 			return true;
 		}
@@ -100,6 +112,31 @@ public class VirtualShop extends JavaPlugin
 			Shop.Invest(sender,args);
 			return true;
 		}
+		return false;
+	}
+
+	private void setupPermmissions()
+	{
+	      Plugin permissionsPlugin = this.getServer().getPluginManager().getPlugin("Permissions");
+
+	      if (this.ph == null) 
+	      {
+	          if (permissionsPlugin != null) {
+	              this.ph = ((Permissions)permissionsPlugin).getHandler();
+	          } else {
+	              return;
+	          }
+	      }
+	}
+	
+	private Boolean HasPermission(CommandSender sender, String permissions)
+	{
+		if(!(sender instanceof Player)) return true;
+		Player p = (Player)sender;
+		if(p.isOp()) return false;
+		if(ph == null) return false;
+		if(ph.has(p, "VirtualShop.hidden")) return false;
+		if(ph.has(p, permissions)) return true;
 		return false;
 	}
 }

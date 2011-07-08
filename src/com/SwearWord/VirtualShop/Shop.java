@@ -84,7 +84,7 @@ public class Shop
 		ItemStack item = ItemDb.get(args[2],amount);
 		if(args[2].equalsIgnoreCase("hand")) 
 		{
-			item=player.getItemInHand();
+			item=new ItemStack(player.getItemInHand().getTypeId());
 			item.setAmount(amount);
 			args[2] = ItemDb.reverseLookup(item);
 		}
@@ -167,7 +167,7 @@ public class Shop
 						cost = price * canbuy;
 						
 					}
-					amount = amount-quant;
+					amount = amount-canbuy;
 					money.subtract(cost);
 					spent += cost;
 					iConomy.Accounts.get(seller).getHoldings().add(cost);
@@ -201,7 +201,7 @@ public class Shop
 						
 						item.setAmount(canbuy);
 						im.addItem(item);
-						amount = 0;
+						amount -= canbuy;
 						DatabaseManager.UpdateQuantity(id, left);
 						DatabaseManager.LogTransaction(seller, player.getName(), item.getTypeId(), canbuy, cost,item.getDurability());
 					

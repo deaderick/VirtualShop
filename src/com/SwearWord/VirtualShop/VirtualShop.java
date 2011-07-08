@@ -23,13 +23,12 @@ public class VirtualShop extends JavaPlugin
 {
 	public File folder = new File("plugins/VirtualShop");
 	private PermissionHandler ph;
-	
-	@Override
+
 	public void onDisable() 
 	{
 		DatabaseManager.Close();
 	}
-	@Override
+
 	public void onEnable() 
 	{
 		try
@@ -104,11 +103,21 @@ public class VirtualShop extends JavaPlugin
 		}
 		if(args[0].equalsIgnoreCase("exchange"))
 		{
+			if(HasPermission(sender, "VirtualShop.noexchange"))
+			{
+				Response.NoPermissions(sender);
+				return true;
+			}
 			Shop.Exchange(sender);
 			return true;
 		}
 		if(args[0].equalsIgnoreCase("invest"))
 		{
+			if(HasPermission(sender, "VirtualShop.noinvest"))
+			{
+				Response.NoPermissions(sender);
+				return true;
+			}
 			Shop.Invest(sender,args);
 			return true;
 		}

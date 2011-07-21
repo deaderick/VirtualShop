@@ -2,7 +2,6 @@ package com.SwearWord.VirtualShop.Utilities;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.HashMap;
 
 import org.bukkit.util.config.Configuration;
 

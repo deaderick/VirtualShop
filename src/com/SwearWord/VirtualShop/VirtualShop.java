@@ -1,12 +1,8 @@
 package com.SwearWord.VirtualShop;
 import java.io.File;
-import java.util.logging.Logger;
-import org.bukkit.ChatColor;
-import org.bukkit.Material;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
-import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -14,7 +10,6 @@ import com.SwearWord.VirtualShop.Utilities.DatabaseManager;
 import com.SwearWord.VirtualShop.Utilities.ItemDb;
 import com.SwearWord.VirtualShop.Utilities.Response;
 import com.SwearWord.VirtualShop.Utilities.VSproperties;
-import com.iConomy.iConomy;
 import com.nijiko.permissions.PermissionHandler;
 import com.nijikokun.bukkit.Permissions.Permissions;
 

@@ -1,19 +1,12 @@
 package com.SwearWord.VirtualShop.Utilities;
 
-import java.net.MalformedURLException;
 import java.sql.ResultSet;
-import java.sql.SQLException;
 
-import org.bukkit.Material;
-import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 
-import com.SwearWord.VirtualShop.VirtualShop;
-import com.alta189.sqlLibrary.MySQL.DatabaseHandler;
 import com.alta189.sqlLibrary.MySQL.mysqlCore;
 import com.alta189.sqlLibrary.SQLite.sqlCore;
-import com.iConomy.iConomy;
 
 
 

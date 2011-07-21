@@ -18,7 +18,6 @@ public class ItemDb
 	private static Map<String, Short> durabilities = new HashMap<String, Short>();
 	private static Map<String,String> reverse = new HashMap<String,String>();
 
-	@SuppressWarnings("LoggerStringConcat")
 	public static void load(File folder, String fname) throws IOException
 	{
 		folder.mkdirs();

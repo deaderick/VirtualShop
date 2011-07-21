@@ -172,7 +172,6 @@ public class DatabaseHandler {
 			  return false;
 			}
 		} catch (SQLException e) {
-			// TODO Auto-generated catch block
 			core.writeError("Failed to check if table \"" + table + "\" exists: " + e.getMessage(), true);
 			return false;
 		}

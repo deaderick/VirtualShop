@@ -2,22 +2,16 @@ package com.SwearWord.VirtualShop;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.Arrays;
-import java.util.Collections;
-
-import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.material.MaterialData;
 
 import com.SwearWord.VirtualShop.Utilities.DatabaseManager;
 import com.SwearWord.VirtualShop.Utilities.InventoryManager;
 import com.SwearWord.VirtualShop.Utilities.ItemDb;
 import com.SwearWord.VirtualShop.Utilities.Response;
 import com.SwearWord.VirtualShop.Utilities.VSproperties;
-import com.alta189.sqlLibrary.MySQL.DatabaseHandler;
 import com.iConomy.iConomy;
 import com.iConomy.system.Holdings;
 
@@ -127,6 +121,7 @@ public class Shop
 		if(amount < 0)
 		{
 			Response.NumberFormat(sender);
+			return;
 		}
 		
 		ItemStack item = ItemDb.get(args[2], 0);

@@ -2,12 +2,12 @@ package com.SwearWord.VirtualShop.Utilities;
 
 import java.util.logging.Logger;
 
+import com.SwearWord.VirtualShop.Listeners.EconomyManager;
 import org.bukkit.ChatColor;
 import org.bukkit.Server;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
-import com.iConomy.iConomy;
 
 public class Response 
 {
@@ -78,7 +78,7 @@ public class Response
 	
 	public static void SendOffer(CommandSender s,String seller, Integer amount, String item, float price)
 	{
-		Response.PlainMsgPlayer(s, FormatSeller(seller)  + " is selling " + FormatAmount(amount) + " " + FormatItem(item) + " for " + FormatPrice(price));
+		Response.PlainMsgPlayer(s, FormatSeller(seller)  + " is selling " + FormatAmount(amount) + " " + FormatItem(item) + " for " + FormatPrice(price) + " each.");
 	}
 	
 	public static void SendLogEvent(CommandSender sender, String seller, Integer amount, String item, float price, String buyer)
@@ -89,7 +89,7 @@ public class Response
 	
 	public static void BroadcastOffer(String seller, Integer amount, String item, float price)
 	{
-		Response.MsgPlayers(FormatSeller(seller)  + " is selling " + FormatAmount(amount) + " " + FormatItem(item) + " for " + FormatPrice(price));
+		Response.MsgPlayers(FormatSeller(seller)  + " is selling " + FormatAmount(amount) + " " + FormatItem(item) + " for " + FormatPrice(price) + " each.");
 	}
 
 	public static void WrongItem(CommandSender sender, String item)
@@ -125,7 +125,7 @@ public class Response
 
 	public static String FormatPrice(Float price)
 	{
-		return ChatColor.YELLOW + iConomy.format(price) + ChatColor.WHITE;
+		return ChatColor.YELLOW + EconomyManager.getMethod().format(price) + ChatColor.WHITE;
 	}
 	
 	public static String FormatBuyer(String buyer)

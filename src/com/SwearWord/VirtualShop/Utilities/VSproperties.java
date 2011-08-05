@@ -54,6 +54,7 @@ public class VSproperties
 		config.setProperty("Exchange.exchange-item", 266);
 		config.getDouble("Exchange.exchange-base-price", 250.0d);
 		config.setProperty("Exchange.multiplier", 0.05);
+		config.setProperty("Exchange.dynamic", true);
 		config.setProperty("using-MySQL", false);
 		config.setProperty("MySQL.username", "root");
 		config.setProperty("MySQL.password", "password");
@@ -62,11 +63,17 @@ public class VSproperties
 		config.setProperty("MySQL.port", 3306);
 		config.save();
 	}
-	
+
+
 	public static void SaveConfig()
 	{
 		config.save();
 	}
+
+    public static Boolean isDynamic()
+    {
+		return config.getBoolean("Exchange.dynamic", true);
+    }
 	
 	public static Integer getExchangeItem()
 	{

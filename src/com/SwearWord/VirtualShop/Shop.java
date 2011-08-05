@@ -2,6 +2,10 @@ package com.SwearWord.VirtualShop;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
+
+import com.SwearWord.VirtualShop.Listeners.EconomyManager;
+import com.nijikokun.register.payment.Method;
+import com.nijikokun.register.payment.Method.MethodAccount;
 import org.bukkit.Material;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
@@ -12,8 +16,6 @@ import com.SwearWord.VirtualShop.Utilities.InventoryManager;
 import com.SwearWord.VirtualShop.Utilities.ItemDb;
 import com.SwearWord.VirtualShop.Utilities.Response;
 import com.SwearWord.VirtualShop.Utilities.VSproperties;
-import com.iConomy.iConomy;
-import com.iConomy.system.Holdings;
 
 public class Shop 
 {
@@ -93,6 +95,24 @@ public class Shop
 			Response.MsgPlayer(sender,"You do not have " + Response.FormatAmount(item.getAmount()) + " " + Response.FormatItem(args[2]));
 			return;
 		}
+        //Astusvis stacking code
+        int a = 0;
+        try
+        {
+
+            ResultSet r = DatabaseManager.SelectSellerItem(player, item);
+            while(r.next())
+            {
+                a += r.getInt("amount");
+            }
+        } catch(Exception ignored)
+        {
+        }
+        if(a != 0)
+        {
+            DatabaseManager.RemoveSellerItem(player, item);
+        }
+        item.setAmount(item.getAmount() + a);
 		DatabaseManager.AddItem(player, item, price);
 		im.remove(item, true, true);
 		if(VSproperties.BroadcastOffers()) 
@@ -133,7 +153,7 @@ public class Shop
 		
 		int original = amount;
 		Player player = (Player)sender;
-		Holdings money = iConomy.getAccount(player.getName()).getHoldings();
+		MethodAccount money = EconomyManager.getMethod().getAccount(player.getName());
 		float spent =0;
 		ResultSet r = DatabaseManager.SelectItem(item);
 		InventoryManager im = new InventoryManager(player);
@@ -165,10 +185,16 @@ public class Shop
 					amount = amount-canbuy;
 					money.subtract(cost);
 					spent += cost;
-					iConomy.Accounts.get(seller).getHoldings().add(cost);
-					Response.MsgPlayer(seller, Response.FormatSeller(player.getName()) + " just bought " + Response.FormatAmount(canbuy) + " " + Response.FormatItem(args[2]) + " for " + Response.FormatPrice(cost));
-					item.setAmount(canbuy);
-					im.addItem(item);
+                    try
+                    {
+                        EconomyManager.getMethod().getAccount(seller).add(cost);
+					    Response.MsgPlayer(seller, Response.FormatSeller(player.getName()) + " just bought " + Response.FormatAmount(canbuy) + " " + Response.FormatItem(args[2]) + " for " + Response.FormatPrice(cost));
+                    }
+                    catch (Exception ignored)
+                    {
+
+                    }
+                    item.setAmount(canbuy);
 					int left = quant-canbuy;
 					if(left == 0) DatabaseManager.DeleteItem(id);
 					else DatabaseManager.UpdateQuantity(id, left);
@@ -191,11 +217,17 @@ public class Shop
 						int left = quant - canbuy;
 						money.subtract(cost);
 						spent += cost;
-						iConomy.Accounts.get(seller).getHoldings().add(cost);
-						Response.MsgPlayer(seller, Response.FormatSeller(player.getDisplayName()) + " just bought " + Response.FormatAmount(canbuy) + " " + Response.FormatItem(args[2]) + " for " + Response.FormatPrice(cost));
-						
+
+                        try
+                        {
+                            EconomyManager.getMethod().getAccount(seller).add(cost);
+                            Response.MsgPlayer(seller, Response.FormatSeller(player.getName()) + " just bought " + Response.FormatAmount(canbuy) + " " + Response.FormatItem(args[2]) + " for " + Response.FormatPrice(cost));
+                        }
+                        catch (Exception ignored)
+                        {
+
+                        }
 						item.setAmount(canbuy);
-						im.addItem(item);
 						amount -= canbuy;
 						DatabaseManager.UpdateQuantity(id, left);
 						DatabaseManager.LogTransaction(seller, player.getName(), item.getTypeId(), canbuy, cost,item.getDurability());
@@ -206,6 +238,7 @@ public class Shop
 		} 
 		catch (Exception e) 
 		{
+            e.printStackTrace();
 			
 		}
 		if(rows == 0)
@@ -214,6 +247,8 @@ public class Shop
 		}
 		else
 		{
+            item.setAmount(original-amount);
+			im.addItem(item);
 			Response.MsgPlayer(sender,"Managed to buy " + Response.FormatAmount((original-amount)) + " " + Response.FormatItem(args[2]) + " for " + Response.FormatPrice(spent));
 		}
 	}
@@ -359,9 +394,16 @@ public class Shop
 		Material m = Material.getMaterial(VSproperties.getExchangeItem());
 		try
 		{
-			double price = CalculateExchangeRates(1);
-			Response.MsgPlayer(sender, "Sell " + Response.FormatItem(m.name()) + ": " + Response.FormatPrice((float)price));
-			Response.MsgPlayer(sender, "Buy " + Response.FormatItem(m.name()) + ": " + Response.FormatPrice((float)(price + VSproperties.getExchangeMultipier())));
+            double sell = VSproperties.getExchangeBase();
+            double buy = sell;
+            if(VSproperties.isDynamic())
+            {
+                sell = CalculateExchangeRates(1);
+                buy = sell + VSproperties.getExchangeMultipier();
+            }
+
+			Response.MsgPlayer(sender, "Sell " + Response.FormatItem(m.name()) + ": " + Response.FormatPrice((float)sell));
+			Response.MsgPlayer(sender, "Buy " + Response.FormatItem(m.name()) + ": " + Response.FormatPrice((float)buy));
 		}
 		catch(Exception e)
 		{
@@ -433,7 +475,7 @@ public class Shop
 		{
 			Response.NumberFormat(sender);
 		}
-		Holdings h = iConomy.getAccount(p.getName()).getHoldings();
+		MethodAccount h = EconomyManager.getMethod().getAccount(p.getName());
 		if(!(h.hasEnough(amount)))
 		{
 			Response.MsgPlayer(sender,"You can't invest that much!");
@@ -445,11 +487,16 @@ public class Shop
 			double price = VSproperties.getExchangeBase();
 			int id = VSproperties.getExchangeItem();
 			double multiplier = VSproperties.getExchangeMultipier();
-			price = CalculateExchangeRates(1) + multiplier;
-			int count = (int)((Math.sqrt(4*price*price - 4*price*multiplier + 8 * amount * multiplier + multiplier * multiplier) - 2*price + multiplier)/(2*multiplier));
-			if(count > 0)
+            int count = (int)(amount/price);
+			if(VSproperties.isDynamic())
+            {
+                price = CalculateExchangeRates(1) + multiplier;
+			    count = (int)((Math.sqrt(4*price*price - 4*price*multiplier + 8 * amount * multiplier + multiplier * multiplier) - 2*price + multiplier)/(2*multiplier));
+            }
+            if(count > 0)
 			{
-				double cost = count*(CalculateExchangeRates(count)+multiplier);
+                double cost = count * price;
+				if(VSproperties.isDynamic()) cost = count*(CalculateExchangeRates(count)+multiplier);
 				amount -= cost;
 				h.subtract(cost);
 				ItemStack is = new ItemStack(id,count);
@@ -470,9 +517,10 @@ public class Shop
 		
 		InventoryManager im = new InventoryManager(p);
 		ItemStack items = im.quantify(type);
-		double price = (Double)CalculateExchangeRates(-items.getAmount());
+        double price = VSproperties.getExchangeBase();
+        if(VSproperties.isDynamic()) price = (Double)CalculateExchangeRates(-items.getAmount());
 		double payment = items.getAmount() * price;
-		iConomy.Accounts.get(p.getName()).getHoldings().add(payment);
+		EconomyManager.getMethod().getAccount(p.getName()).add(payment);
 		im.remove(items);
 		if(items.getAmount() > 0)
 		{
@@ -501,7 +549,7 @@ public class Shop
 		try
 		{
 			Float i = Float.parseFloat(s);
-			if(i > 0) return i;
+			if(i >= 0.01) return i;
 		}
 		catch(NumberFormatException ex)
 		{

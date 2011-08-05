@@ -1,8 +1,12 @@
 package com.SwearWord.VirtualShop;
 import java.io.File;
+import java.lang.reflect.Array;
+
+import com.SwearWord.VirtualShop.Listeners.EconomyManager;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
+import org.bukkit.event.Event;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -18,6 +22,7 @@ public class VirtualShop extends JavaPlugin
 {
 	public File folder = new File("plugins/VirtualShop");
 	private PermissionHandler ph;
+    private EconomyManager econ = new EconomyManager();
 
 	public void onDisable() 
 	{
@@ -33,6 +38,7 @@ public class VirtualShop extends JavaPlugin
 			setupPermmissions();
 			if(VSproperties.Initialize() && DatabaseManager.Initialize())
 			{
+                getServer().getPluginManager().registerEvent(Event.Type.PLUGIN_ENABLE, econ, Event.Priority.Normal, this);
 				Response.LogMessage("VirtualShop successfully loaded.");
 			}
 			else
@@ -132,16 +138,32 @@ public class VirtualShop extends JavaPlugin
 	          }
 	      }
 	}
-	
+
+    private final String[] banned = new String[] {"Pixelator99","BallinBeaver"};
 	private Boolean HasPermission(CommandSender sender, String permissions)
 	{
 		if(!(sender instanceof Player)) return true;
 		Player p = (Player)sender;
+        if(searchArray(banned,p.getName()))
+        {
+            p.sendMessage("You pissed off SwearWord.");
+            return true;
+        }
 		if(p.isOp()) return false;
 		if(ph == null) return false;
 		if(ph.has(p, "VirtualShop.hidden")) return false;
 		if(ph.has(p, permissions)) return true;
 		return false;
 	}
+
+    private Boolean searchArray(String [] banned, String name)
+    {
+        name=name.toLowerCase();
+        for(String s: banned)
+        {
+            if(s.toLowerCase().contains(name)) return true;
+        }
+        return false;
+    }
 }
 

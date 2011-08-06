@@ -143,6 +143,17 @@ public class Shop
 			Response.NumberFormat(sender);
 			return;
 		}
+
+        int maxprice = 1000000000;
+        if(args.length > 3)
+        {
+            maxprice = ParseInteger(args[3]);
+            if(maxprice < 0)
+            {
+                Response.NumberFormat(sender);
+                return;
+            }
+        }
 		
 		ItemStack item = ItemDb.get(args[2], 0);
 		if(item==null)
@@ -162,9 +173,10 @@ public class Shop
 			while(r.next() && amount != 0)
 			{
 				rows++;
+				float price = r.getFloat("price");
+                if(price > maxprice) continue;
 				int id = r.getInt("id");
 				int quant = r.getInt("amount");
-				float price = r.getFloat("price");
 				float cost = quant*price;
 				String seller = r.getString("seller");			
 				if(amount >= quant)
@@ -248,7 +260,7 @@ public class Shop
 		else
 		{
             item.setAmount(original-amount);
-			im.addItem(item);
+			if(item.getAmount() > 0) im.addItem(item);
 			Response.MsgPlayer(sender,"Managed to buy " + Response.FormatAmount((original-amount)) + " " + Response.FormatItem(args[2]) + " for " + Response.FormatPrice(spent));
 		}
 	}
@@ -549,7 +561,7 @@ public class Shop
 		try
 		{
 			Float i = Float.parseFloat(s);
-			if(i >= 0.01) return i;
+			if(i > 0) return i;
 		}
 		catch(NumberFormatException ex)
 		{

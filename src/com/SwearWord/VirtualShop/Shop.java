@@ -144,10 +144,10 @@ public class Shop
 			return;
 		}
 
-        int maxprice = 1000000000;
+        float maxprice = 1000000000;
         if(args.length > 3)
         {
-            maxprice = ParseInteger(args[3]);
+            maxprice = ParseFloat(args[3]);
             if(maxprice < 0)
             {
                 Response.NumberFormat(sender);

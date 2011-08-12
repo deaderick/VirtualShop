@@ -99,6 +99,11 @@ public class VirtualShop extends JavaPlugin
 		}
 		if(args[0].equalsIgnoreCase("rates"))
 		{
+            if(HasPermission(sender, "VirtualShop.norates"))
+			{
+                Response.NoPermissions(sender);
+				return true;
+            }
 			Shop.PrintRates(sender, args);
 			return true;
 		}

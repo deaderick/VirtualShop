@@ -1,0 +1,10 @@
+<component name="ArtifactManager">
+  <artifact type="jar" build-on-make="true" name="VirtualShop:jar">
+    <output-path>$PROJECT_DIR$/dist</output-path>
+    <root id="archive" name="VirtualShop.jar">
+      <element id="module-output" name="VirtualShop" />
+      <element id="file-copy" path="$PROJECT_DIR$/src/items.csv" />
+      <element id="file-copy" path="$PROJECT_DIR$/src/plugin.yml" />
+    </root>
+  </artifact>
+</component>
